@@ -3,6 +3,10 @@ import template
 
 parser = argparse.ArgumentParser(description='EDSR and MDSR')
 
+parser.add_argument('--channels_last', type=int, default=1)
+parser.add_argument('--profile', action='store_true')
+parser.add_argument('--num_iter', type=int, default=10)
+parser.add_argument('--num_warmup', type=int, default=0)
 parser.add_argument('--debug', action='store_true',
                     help='Enables debug mode')
 parser.add_argument('--template', default='.',
@@ -68,9 +72,9 @@ parser.add_argument('--res_scale', type=float, default=1,
                     help='residual scaling')
 parser.add_argument('--shift_mean', default=True,
                     help='subtract pixel mean from the input')
-parser.add_argument('--precision', type=str, default='single',
-                    choices=('single', 'half'),
-                    help='FP precision for test (single | half)')
+parser.add_argument('--precision', type=str, default='bfloat16',
+                    choices=('single', 'float32', 'half', 'bfloat16'),
+                    help='FP precision for test (single | float32 | half | bfloat16)')
 
 # Training specifications
 parser.add_argument('--reset', action='store_true',
@@ -146,6 +150,7 @@ parser.add_argument('--testset', type=str, default='Set5',
                     help='dataset name for testing')
 parser.add_argument('--degradation', type=str, default='BI',
                     help='degradation model: BI, BD')
+
 
                     
 args = parser.parse_args()

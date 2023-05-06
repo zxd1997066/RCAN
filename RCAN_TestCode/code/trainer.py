@@ -1,5 +1,6 @@
 import os
 import math
+import time
 from decimal import Decimal
 
 import utility
@@ -80,22 +81,59 @@ class Trainer():
         self.model.eval()
 
         timer_test = utility.timer()
+        total_time = 0.0
+        total_sample = 0
+        batch_time_list = []
         with torch.no_grad():
             for idx_scale, scale in enumerate(self.scale):
                 eval_acc = 0
                 self.loader_test.dataset.set_scale(idx_scale)
                 tqdm_test = tqdm(self.loader_test, ncols=80)
-                for idx_img, (lr, hr, filename, _) in enumerate(tqdm_test):
+                for idx_img, (lr, hr, filename) in enumerate(tqdm_test):
                     filename = filename[0]
                     no_eval = (hr.nelement() == 1)
                     if not no_eval:
                         lr, hr = self.prepare([lr, hr])
                     else:
                         lr = self.prepare([lr])[0]
+                    if self.args.channels_last:
+                        lr = lr.to(memory_format=torch.channels_last)
 
-                    sr = self.model(lr, idx_scale)
+                    if self.args.profile:
+                        with torch.profiler.profile(
+                            activities=[torch.profiler.ProfilerActivity.CPU],
+                            record_shapes=True,
+                            schedule=torch.profiler.schedule(
+                                wait=int(self.args.num_iter/2),
+                                warmup=2,
+                                active=1,
+                            ),
+                            on_trace_ready=self.trace_handler,
+                        ) as p:
+                            for i in range(self.args.num_iter):
+                                tic = time.time()
+                                sr = self.model(lr, idx_scale)
+                                p.step()
+                                toc = time.time()
+                                elapsed = toc - tic
+                                print("Iteration: {}, inference time: {} sec.".format(i, elapsed), flush=True)
+                                if i >= self.args.num_warmup:
+                                    total_time += elapsed
+                                    total_sample += 1
+                                    batch_time_list.append((toc - tic) * 1000)
+                    else:
+                        for i in range(self.args.num_iter):
+                            tic = time.time()
+                            sr = self.model(lr, idx_scale)
+                            toc = time.time()
+                            elapsed = toc - tic
+                            print("Iteration: {}, inference time: {} sec.".format(i, elapsed), flush=True)
+                            if i >= self.args.num_warmup:
+                                total_time += elapsed
+                                total_sample += 1
+                                batch_time_list.append((toc - tic) * 1000)
+
                     sr = utility.quantize(sr, self.args.rgb_range)
-
                     save_list = [sr]
                     if not no_eval:
                         eval_acc += utility.calc_psnr(
@@ -103,10 +141,12 @@ class Trainer():
                             benchmark=self.loader_test.dataset.benchmark
                         )
                         save_list.extend([lr, hr])
-
                     if self.args.save_results:
                         #self.ckp.save_results(filename, save_list, scale)
                         self.ckp.save_results_nopostfix(filename, save_list, scale)
+
+                    break
+
 
                 self.ckp.log[-1, idx_scale] = eval_acc / len(self.loader_test)
                 best = self.ckp.log.max(0)
@@ -119,12 +159,41 @@ class Trainer():
                         best[1][idx_scale] + 1
                     )
                 )
+                break
 
+        print("\n", "-"*20, "Summary", "-"*20)
+        latency = total_time / total_sample * 1000
+        throughput = total_sample / total_time
+        print("inference latency:\t {:.3f} ms".format(latency))
+        print("inference Throughput:\t {:.2f} samples/s".format(throughput))
+        # P50
+        batch_time_list.sort()
+        p50_latency = batch_time_list[int(len(batch_time_list) * 0.50) - 1]
+        p90_latency = batch_time_list[int(len(batch_time_list) * 0.90) - 1]
+        p99_latency = batch_time_list[int(len(batch_time_list) * 0.99) - 1]
+        print('Latency P50:\t %.3f ms\nLatency P90:\t %.3f ms\nLatency P99:\t %.3f ms\n'\
+                % (p50_latency, p90_latency, p99_latency))
+ 
         self.ckp.write_log(
             'Total time: {:.2f}s, ave time: {:.2f}s\n'.format(timer_test.toc(), timer_test.toc()/len(self.loader_test)), refresh=True
         )
         if not self.args.test_only:
             self.ckp.save(self, epoch, is_best=(best[1][0] + 1 == epoch))
+
+    def trace_handler(self, p):
+        output = p.key_averages().table(sort_by="self_cpu_time_total")
+        print(output)
+        import pathlib
+        timeline_dir = str(pathlib.Path.cwd()) + '/timeline/'
+        if not os.path.exists(timeline_dir):
+            try:
+                os.makedirs(timeline_dir)
+            except:
+                pass
+        timeline_file = timeline_dir + 'timeline-' + str(torch.backends.quantized.engine) + '-' + \
+                    'RCAN-' + str(p.step_num) + '-' + str(os.getpid()) + '.json'
+        p.export_chrome_trace(timeline_file)
+
 
     def prepare(self, l, volatile=False):
         device = torch.device('cpu' if self.args.cpu else 'cuda')

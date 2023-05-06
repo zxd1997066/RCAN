@@ -7,19 +7,22 @@ import collections
 import torch
 import torch.multiprocessing as multiprocessing
 
-from torch._C import _set_worker_signal_handlers, _update_worker_pids, \
-    _remove_worker_pids, _error_if_any_worker_fails
+# from torch._C import _set_worker_signal_handlers, _set_worker_pids, \
+#     _remove_worker_pids, _error_if_any_worker_fails
 from torch.utils.data.dataloader import DataLoader
-from torch.utils.data.dataloader import _DataLoaderIter
+#from torch.utils.data.dataloader import _DataLoaderIter
+from torch.utils.data.dataloader import _BaseDataLoaderIter
+from torch.utils.data.dataloader import _SingleProcessDataLoaderIter
+from torch.utils.data.dataloader import _MultiProcessingDataLoaderIter
 
 from torch.utils.data.dataloader import ExceptionWrapper
-from torch.utils.data.dataloader import _use_shared_memory
-from torch.utils.data.dataloader import _worker_manager_loop
-from torch.utils.data.dataloader import numpy_type_map
+#from torch.utils.data.dataloader import _use_shared_memory
+#from torch.utils.data.dataloader import _worker_manager_loop
+#from torch.utils.data.dataloader import numpy_type_map
 from torch.utils.data.dataloader import default_collate
-from torch.utils.data.dataloader import pin_memory_batch
-from torch.utils.data.dataloader import _SIGCHLD_handler_set
-from torch.utils.data.dataloader import _set_SIGCHLD_handler
+#from torch.utils.data.dataloader import pin_memory_batch
+#from torch.utils.data.dataloader import _SIGCHLD_handler_set
+# from torch._utils.signal_handling import _set_SIGCHLD_handler
 
 if sys.version_info[0] == 2:
     import Queue as queue
@@ -52,8 +55,9 @@ def _ms_loop(dataset, index_queue, data_queue, collate_fn, scale, seed, init_fn,
         else:
             data_queue.put((idx, samples))
 
-class _MSDataLoaderIter(_DataLoaderIter):
+class _MSDataLoaderIter(_SingleProcessDataLoaderIter):
     def __init__(self, loader):
+        super(_MSDataLoaderIter, self).__init__(loader)
         self.dataset = loader.dataset
         self.scale = loader.scale
         self.collate_fn = loader.collate_fn
