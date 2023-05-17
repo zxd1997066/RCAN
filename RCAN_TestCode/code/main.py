@@ -27,6 +27,12 @@ if checkpoint.ok:
             while not t.terminate():
                 #t.train()
                 t.test()
+    if args.precision == "float16":
+        print("---- Running with float16...")
+        with torch.cpu.amp.autocast(enabled=True, dtype=torch.half): 
+            while not t.terminate():
+                #t.train()
+                t.test()
     else:
         while not t.terminate():
             t.test()
