@@ -73,7 +73,7 @@ parser.add_argument('--res_scale', type=float, default=1,
 parser.add_argument('--shift_mean', default=True,
                     help='subtract pixel mean from the input')
 parser.add_argument('--precision', type=str, default='bfloat16',
-                    choices=('single', 'float32', 'half', 'bfloat16'),
+                    choices=('single', 'float32', 'half', 'bfloat16', 'float16'),
                     help='FP precision for test (single | float32 | half | bfloat16)')
 
 # Training specifications
