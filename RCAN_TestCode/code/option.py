@@ -15,6 +15,8 @@ parser.add_argument("--compile", action='store_true', default=False,
                     help="enable torch.compile")
 parser.add_argument("--backend", type=str, default='inductor',
                     help="enable torch.compile backend")
+parser.add_argument("--device", type=str, default='cpu',
+                    help="cpu or cuda")
 
 # Hardware specifications
 parser.add_argument('--n_threads', type=int, default=3,
