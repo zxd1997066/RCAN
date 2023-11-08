@@ -83,7 +83,7 @@ function generate_core {
                 --pre_train ${DATASET_DIR}/models_ECCV2018RCAN/RCAN_BIX3.pt \
                 --testpath ../LR/LRBI/ --testset Set5 --n_threads 0 --cpu \
                 --channels_last ${channels_last} \
-                --num_iter ${num_iter} --num_warmup ${num_warmup} \
+                --num_iter ${num_iter} --num_warmup ${num_warmup} --device $device\
                 --precision=${precision} \
                 ${addtion_options} \
         > ${log_file} 2>&1 &  \n" |tee -a ${excute_cmd_file}
