@@ -15,6 +15,9 @@ if checkpoint.ok:
     model = model.Model(args, checkpoint)
     if args.compile:
         model = torch.compile(model, backend=args.backend, options={"freezing": True})
+    if torch.cuda.is_available():
+        ngpus_per_node = torch.cuda.device_count()
+        args.device = "cuda"
     if args.channels_last:
         try:
             model = model.to(memory_format=torch.channels_last)
@@ -31,10 +34,19 @@ if checkpoint.ok:
                 t.test()
     if args.precision == "float16":
         print("---- Running with float16...")
-        with torch.cpu.amp.autocast(enabled=True, dtype=torch.half): 
-            while not t.terminate():
-                #t.train()
-                t.test()
+        if args.device == "cpu":
+            print('---- Enable CPU AMP float16')
+            with torch.cpu.amp.autocast(enabled=True, dtype=torch.half): 
+                while not t.terminate():
+                    #t.train()
+                    t.test()
+        elif args.device == "cuda":
+            print('---- Enable CUDA AMP float16')
+            with torch.cuda.amp.autocast(enabled=True, dtype=torch.half): 
+                while not t.terminate():
+                    #t.train()
+                    t.test()
+            
     else:
         while not t.terminate():
             t.test()
