@@ -13,6 +13,8 @@ checkpoint = utility.checkpoint(args)
 if checkpoint.ok:
     loader = data.Data(args)
     model = model.Model(args, checkpoint)
+    if args.compile:
+        model = torch.compile(model, backend=args.backend, options={"freezing": True})
     if args.channels_last:
         try:
             model = model.to(memory_format=torch.channels_last)
