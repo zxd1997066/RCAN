@@ -11,6 +11,10 @@ parser.add_argument('--debug', action='store_true',
                     help='Enables debug mode')
 parser.add_argument('--template', default='.',
                     help='You can set various templates in option.py')
+parser.add_argument("--compile", action='store_true', default=False,
+                    help="enable torch.compile")
+parser.add_argument("--backend", type=str, default='inductor',
+                    help="enable torch.compile backend")
 
 # Hardware specifications
 parser.add_argument('--n_threads', type=int, default=3,
