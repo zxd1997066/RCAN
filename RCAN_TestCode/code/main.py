@@ -24,6 +24,8 @@ if checkpoint.ok:
             print("---- Use NHWC model")
         except:
             print("---- Use normal model")
+    if args.compile:
+            model = torch.compile(model, backend=args.backend, options={"freezing": True})
     loss = loss.Loss(args, checkpoint) if not args.test_only else None
     t = Trainer(args, loader, model, loss, checkpoint)
     if args.precision == "bfloat16":
