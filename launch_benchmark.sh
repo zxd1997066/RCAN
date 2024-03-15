@@ -41,6 +41,9 @@ function main {
         #
         for batch_size in ${batch_size_list[@]}
         do
+            if [ $batch_size -le 0 ];then
+                batch_size=32
+            fi
             # clean workspace
             logs_path_clean
             # generate launch script for multiple instance
@@ -83,7 +86,7 @@ function generate_core {
                 --pre_train ${DATASET_DIR}/models_ECCV2018RCAN/RCAN_BIX3.pt \
                 --testpath ../LR/LRBI/ --testset Set5 --n_threads 0 --cpu \
                 --channels_last ${channels_last} \
-                --num_iter ${num_iter} --num_warmup ${num_warmup} --device $device\
+                --num_iter ${num_iter} --num_warmup ${num_warmup} --device $device --batch_size $batch_size \
                 --precision=${precision} \
                 ${addtion_options} \
         > ${log_file} 2>&1 &  \n" |tee -a ${excute_cmd_file}
@@ -114,7 +117,7 @@ function generate_core_launcher {
                 --pre_train ${DATASET_DIR}/models_ECCV2018RCAN/RCAN_BIX3.pt \
                 --testpath ../LR/LRBI/ --testset Set5 --n_threads 0 --cpu \
                 --channels_last ${channels_last} \
-                --num_iter ${num_iter} --num_warmup ${num_warmup} --device $device\
+                --num_iter ${num_iter} --num_warmup ${num_warmup} --device $device --batch_size $batch_size \
                 --precision=${precision} \
                 ${addtion_options} \
         > /dev/null 2>&1 &  \n" |tee -a ${excute_cmd_file}
