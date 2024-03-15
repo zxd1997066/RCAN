@@ -43,7 +43,6 @@ class Data:
         self.loader_test = MSDataLoader(
             args,
             testset,
-            batch_size=1,
             shuffle=False,
             **kwargs
         )
