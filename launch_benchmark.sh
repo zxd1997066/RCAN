@@ -29,6 +29,9 @@ function main {
     # generate benchmark
     for model_name in ${model_name_list[@]}
     do
+        if [ $batch_size -le 0 ];then
+            batch_size=32
+        fi
         # pre-run
          python main.py --data_test MyImage --scale 3 --model RCAN \
             --test_only --chop --self_ensemble \
