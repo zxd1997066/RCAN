@@ -13,8 +13,8 @@ checkpoint = utility.checkpoint(args)
 if checkpoint.ok:
     loader = data.Data(args)
     model = model.Model(args, checkpoint)
-    if args.compile:
-        model = torch.compile(model, backend=args.backend, options={"freezing": True})
+    # if args.compile:
+    #     model = torch.compile(model, backend=args.backend, options={"freezing": True})
     if torch.cuda.is_available():
         ngpus_per_node = torch.cuda.device_count()
         args.device = "cuda"
