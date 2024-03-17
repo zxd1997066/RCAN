@@ -84,7 +84,8 @@ class Trainer():
         total_time = 0.0
         total_sample = 0
         batch_time_list = []
-        
+        if self.args.compile:
+            self.model = torch.compile(self.model, backend=self.args.backend, options={"freezing": True})       
         with torch.no_grad():
             for idx_scale, scale in enumerate(self.scale):
                 eval_acc = 0
