@@ -34,7 +34,7 @@ function main {
             --test_only --chop --self_ensemble \
             --n_resgroups 10 --n_resblocks 20 --n_feats 64 \
             --pre_train ${DATASET_DIR}/models_ECCV2018RCAN/RCAN_BIX3.pt \
-            --testpath ../LR/LRBI/ --testset Set5 --n_threads 0 --cpu \
+            --testpath ../LR/LRBI/ --testset Set5 --n_threads 0 --cpu --batch_size $batch_size \
             --num_iter 1 --num_warmup 0 \
             --channels_last ${channels_last} --precision=${precision} --device $device \
             ${addtion_options}
