@@ -18,6 +18,10 @@ if checkpoint.ok:
     if torch.cuda.is_available():
         ngpus_per_node = torch.cuda.device_count()
         args.device = "cuda"
+    if args.triton_cpu:
+        print("run with triton cpu backend")
+        import torch._inductor.config
+        torch._inductor.config.cpu_backend="triton"
     if args.channels_last:
         try:
             model = model.to(memory_format=torch.channels_last)
